@@ -4,12 +4,19 @@ module.exports.MakeFile = class MakeFile {
 
     static outputFolder = "./output/";
 
-    static createLog(fileLineList) {
+    /**
+     * 
+     * @param {Array<TestSuite>} testSuiteList 
+     */
+    static createLog(testSuiteList) {
 
-        fileLineList.forEach(l => {
-            const fileName = `${Math.floor((new Date()).getTime() / 1000)}.txt`;
+        // console.log(fileLineList);
+        testSuiteList.forEach(testSuite => {
+            const fileName = `${testSuite.name}.txt`;
             var temp = "";
-            temp += l + "\n";
+            testSuite.logOutputPerLine.forEach(ln => {
+                temp += ln + "\n";
+            })
             fs.writeFileSync(`${this.outputFolder}${fileName}`, temp);
         });
     }

@@ -1,31 +1,35 @@
 const { getFiles, getSourceFile } = require("./core/arguments");
 const { FileReader } = require("./core/extract");
 const { MakeFile } = require("./core/make");
+const { TestSuite } = require("./core/interface/testSuite");
 
 function filter(lineList, fileList) {
 
-    const compiledLines = [];
+    const testSuitesList = [];
 
     fileList.forEach(filePath => {
         const tempLines = [];
 
         console.log(`Seeking ${filePath}`);
+        const fileName = filePath.replace(/\\/gi,"-");
+
         filePath = filePath.replace(/\\/g, "\\\\");
         var exp = new RegExp(`${filePath}`, "gi");
-        // lineList = ["2021-02-01T22:09:13.6567983Z  tests\\sanity\\SAN_Accounting.js    '--use_user=ADMIN', "]
+
+        const testSuite = new TestSuite(fileName, []);
 
         lineList.forEach(line => {
 
             if (exp.test(line)) {
-                tempLines.push(line);
+                testSuite.logOutputPerLine.push(line.replace(/(.*).js  /gi, ""));
             }
         });
 
-        compiledLines.push(tempLines);
+        testSuitesList.push(testSuite);
 
     });
 
-    return compiledLines;
+    return testSuitesList;
 }
 
 
@@ -35,16 +39,16 @@ function main() {
     const sourceFile = getSourceFile();
     const lines = FileReader.readFile(sourceFile);
 
-    var filteredLinesPerFile = filter(lines, fileList);
+    var testSuiteList = filter(lines, fileList);
 
-    MakeFile.createLog(filteredLinesPerFile);
+    MakeFile.createLog(testSuiteList);
 
 }
 
 main();
 
 //sanity test
-//node parse input\105.txt -f tests\sanity\SAN_Accounting.js
+//node parse input\105.txt -f tests\sanity\SAN_Accounting.js tests\sanity\SAN_Utilities.js
 
 //HP
-//node parse input\Sample_HP.txt -f tests\happy\billing\interactiveBilling\HP_BL_InteractiveBilling_VerifyInvoiceAmount.js
+//node parse input\Sample_HP.txt -f tests\happy\billing\interactiveBilling\HP_BL_InteractiveBilling_VerifyInvoiceAmount.js 
