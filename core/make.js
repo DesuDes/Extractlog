@@ -10,14 +10,35 @@ module.exports.MakeFile = class MakeFile {
      */
     static createLog(testSuiteList) {
 
-        // console.log(fileLineList);
+        this.createOutputFolder();
+
         testSuiteList.forEach(testSuite => {
             const fileName = `${testSuite.name}.txt`;
             var temp = "";
+
             testSuite.logOutputPerLine.forEach(ln => {
                 temp += ln + "\n";
             })
             fs.writeFileSync(`${this.outputFolder}${fileName}`, temp);
+            console.log(`Log for ${testSuite.name} done!`);
         });
+
+    }
+
+    static createOutputFolder() {
+        /**
+         * Check if directory exist
+         */
+        if (fs.existsSync(this.outputFolder)) {
+            // Do something
+            console.log("Output folder already exists!\n");
+        } else {
+            //create folder
+            fs.mkdirSync(this.outputFolder);
+        }
+
+        console.log(`Results will be placed in this directory: ${this.outputFolder}.\n`);
+
+
     }
 }

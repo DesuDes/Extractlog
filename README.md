@@ -4,9 +4,7 @@ A tool to extract nightwatch test suites selenium logs into individual `.txt` fi
 ## Installation
 1. install nodejs
 2. Download the files or pull this repository.
-3. Create an folder named `output` on the same directory.
 
--------
 ## Parse.js
 The module to extract log files from the pipeline.
 
