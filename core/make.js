@@ -25,6 +25,14 @@ module.exports.MakeFile = class MakeFile {
 
     }
 
+    static createFile(contents, fileName, fileExt) {
+        this.createOutputFolder();
+
+        fs.writeFileSync(`${this.outputFolder}${fileName}.${fileExt}`, contents);
+        console.log(`Log for ${fileName}.${fileExt} done!`);
+
+    }
+
     static createOutputFolder() {
         /**
          * Check if directory exist
