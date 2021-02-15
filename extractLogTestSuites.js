@@ -1,4 +1,4 @@
-const { getFiles, getSourceFile } = require("./core/arguments");
+const { getFiles, getSourceFile, getArgumentValues } = require("./core/arguments");
 const { FileReader } = require("./core/extract");
 const { MakeFile } = require("./core/make");
 
@@ -12,13 +12,14 @@ function registerFile(fileName) {
 }
 /**
  * Extract all the files/test suites involved in a run.
- * Command: node testSuiteExtract input/Sample_HP.txt
+ * Command: node extractLogTestSuites input/Sample_HP.txt
  */
 function main() {
 
     console.time("[testSuiteExtract] Extract time");
     const sourceFile = getSourceFile();
     const lines = FileReader.readFile(sourceFile);
+    const argVal = getArgumentValues("-f");
 
     /**
      * extract file path starting from Zulu

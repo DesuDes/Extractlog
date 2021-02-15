@@ -1,4 +1,4 @@
-const { getFiles, getSourceFile } = require("./core/arguments");
+const { getFiles, getSourceFile, getOutputFolder, getBatchReferenceFile } = require("./core/arguments");
 const { FileReader } = require("./core/extract");
 const { MakeFile } = require("./core/make");
 const { TestSuite } = require("./core/interface/testSuite");
@@ -15,50 +15,69 @@ const { TestSuite } = require("./core/interface/testSuite");
 function filter(lineList, fileList) {
 
 
-        const testSuitesList = [];
+    const testSuitesList = [];
 
-        fileList.forEach(filePath => {
+    fileList.forEach(filePath => {
 
-            console.log(`Creating instance for ${filePath}.`);
-            const fileName = filePath.replace(/\\/gi, "-");
-            filePath = filePath.replace(/\\/g, "\\\\");
+        console.log(`Creating instance for ${filePath}.`);
+        var fileName = filePath.replace(/\\/gi, "-");
 
-            var exp = new RegExp(`${filePath}`, "gi");
+        var reg = /([A-Za-z0-9_\\]+)\.js$/gi;
+        var match = reg.exec(fileName);
+        if(match != null){
+            fileName  = match[0];
+        }
 
-            const testSuite = new TestSuite(fileName, exp, []);
+        filePath = filePath.replace(/\\/g, "\\\\");
 
-            testSuitesList.push(testSuite);
+        var exp = new RegExp(`${filePath}`, "gi");
 
+        const testSuite = new TestSuite(fileName, exp, []);
+
+        testSuitesList.push(testSuite);
+
+    });
+
+    lineList.forEach(line => {
+
+        testSuitesList.forEach(suite => {
+
+            if (suite.regExp.test(line)) {
+                /**
+                 * Clean up leading date.
+                 */
+                suite.logOutputPerLine.push(line.replace(/(.*).js  /gi, ""));
+            }
         });
 
-        lineList.forEach(line => {
 
-            testSuitesList.forEach(suite => {
+    });
 
-                if (suite.regExp.test(line)) {
-                    /**
-                     * Clean up leading date.
-                     */
-                    suite.logOutputPerLine.push(line.replace(/(.*).js  /gi, ""));
-                }
-            });
-
-
-        });
-
-        return testSuitesList;
+    return testSuitesList;
 }
 
 
 function main() {
 
     console.time("Extract time");
-    const fileList = getFiles();
+
+    var fileList = getFiles();
     const sourceFile = getSourceFile();
     const lines = FileReader.readFile(sourceFile);
+    const batchReferenceFilePath = getBatchReferenceFile();
+
+    if (batchReferenceFilePath != null) {
+        console.log("Using batch for file reference.");
+        //read json
+        var file = FileReader.readFileNative(batchReferenceFilePath);
+        fileList = JSON.parse(file);
+    }
+
+    var outputFolder = getOutputFolder();
+    outputFolder = FileReader.normalizePath(outputFolder.length > 0 ? outputFolder[0] : "");
 
     var testSuiteList = filter(lines, fileList);
-    MakeFile.createLog(testSuiteList);
+    MakeFile.createLog(testSuiteList, outputFolder);
     console.timeEnd("Extract time");
 
 }

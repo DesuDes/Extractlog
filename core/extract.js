@@ -29,6 +29,14 @@ module.exports.FileReader = class FileReader {
 
     }
 
+    static readFileNative(path) {
+        return fs.readFileSync(path, 'utf8');
+    }
+
+    static normalizePath(path) {
+        return /\/|\\$/gi.test(path) ? path : `${path}\\`;
+    }
+
 
 
 
