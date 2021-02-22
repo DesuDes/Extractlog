@@ -1,4 +1,4 @@
-const { getFiles, getSourceFile } = require("./core/arguments");
+const { getFiles, getSourceFile, getOutputFolder, getBatchReferenceFile } = require("./core/arguments");
 const { FileReader } = require("./core/extract");
 const { MakeFile } = require("./core/make");
 const { TestSuite } = require("./core/interface/testSuite");
@@ -12,53 +12,83 @@ const { TestSuite } = require("./core/interface/testSuite");
 //HP
 //node parse input\Sample_HP.txt -f tests\happy\billing\interactiveBilling\HP_BL_InteractiveBilling_VerifyInvoiceAmount.js tests\happy\hubs\projects\revenueForecast\HP_HB_PR_RF_ChangesToProjectsWithRFPlan.js tests\happy\hubs\projects\project\HP_MS_RPT_PRJ_PrintReports.js tests\happy\hubs\projects\project\HP_HB_PR_PRJ_SavedSearches_Suite.jstests\happy\hubs\projects\revenueForecast\HP_HB_PR_RF_ChangesToProjectsWithRFPlan.js tests\happy\hubs\projects\project\HP_MS_RPT_PRJ_PrintReports.js tests\happy\hubs\projects\project\HP_HB_PR_PRJ_SavedSearches_Suite.js
 
+//hp test
+//node parse input\135.txt -f tests\happy\hubs\projects\plan\HP_HB_PLN_VerifyProjectPlanReports(WBS1).js
+//node parse input\Sample_HP.txt -b output\input-Sample_HP-txt.map.json -o Sample_HP
+
 function filter(lineList, fileList) {
 
 
-        const testSuitesList = [];
+    const testSuitesList = [];
 
-        fileList.forEach(filePath => {
+    fileList.forEach(filePath => {
 
-            console.log(`Creating instance for ${filePath}.`);
-            const fileName = filePath.replace(/\\/gi, "-");
-            filePath = filePath.replace(/\\/g, "\\\\");
+        console.log(`Creating instance for ${filePath}.`);
+        var fileName = filePath.replace(/\\/gi, "-");
 
-            var exp = new RegExp(`${filePath}`, "gi");
+        var reg = /([A-Za-z0-9_\\()]+)\.js$/gi;
+        var match = reg.exec(fileName);
+        if (match != null) {
+            fileName = match[0];
+        }
 
-            const testSuite = new TestSuite(fileName, exp, []);
+        filePath = filePath.replace(/\\/g, "\\\\").replace(/\(/gi, "\\(").replace(/\)/gi, "\\)");
 
-            testSuitesList.push(testSuite);
+        var exp = new RegExp(`${filePath}`, "gi");
 
-        });
+        const testSuite = new TestSuite(fileName, exp, []);
 
-        lineList.forEach(line => {
+        testSuitesList.push(testSuite);
 
-            testSuitesList.forEach(suite => {
+    });
 
-                if (suite.regExp.test(line)) {
-                    /**
-                     * Clean up leading date.
-                     */
-                    suite.logOutputPerLine.push(line.replace(/(.*).js  /gi, ""));
-                }
-            });
+    console.log(`\n${lineList.length} lines will be processed. Please wait as we extract the logs. This may take a while....\n`);
 
+    lineList.forEach(line => {
+        for (var x = 0; x < testSuitesList.length; x++) {
+            const suite = testSuitesList[x];
+            if (suite.regExp.test(line)) {
+                /**
+                 * Clean up leading date.
+                 */
+                suite.logOutputPerLine.push(line.replace(/(.*).js  /gi, ""));
+                break;
+            }
+        }
+    });
 
-        });
-
-        return testSuitesList;
+    return testSuitesList;
 }
 
 
 function main() {
 
     console.time("Extract time");
-    const fileList = getFiles();
+
+    var fileList = getFiles();
     const sourceFile = getSourceFile();
     const lines = FileReader.readFile(sourceFile);
+    const batchReferenceFilePath = getBatchReferenceFile();
+
+    if (batchReferenceFilePath != null) {
+        console.log("Using batch for file reference.");
+        //read json
+        var file = FileReader.readFileNative(batchReferenceFilePath);
+        fileList = JSON.parse(file);
+    }
+
+    var outputFolder = getOutputFolder();
+
+    if (outputFolder.length > 0) {
+        outputFolder = FileReader.normalizePath(outputFolder[0]);
+    } else {
+        outputFolder = "";
+    }
+
+    console.log("target output folder", outputFolder);
 
     var testSuiteList = filter(lines, fileList);
-    MakeFile.createLog(testSuiteList);
+    MakeFile.createLog(testSuiteList, outputFolder);
     console.timeEnd("Extract time");
 
 }

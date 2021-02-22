@@ -29,7 +29,26 @@ module.exports.FileReader = class FileReader {
 
     }
 
+    static readFileNative(path) {
+        return fs.readFileSync(path, 'utf8');
+    }
+
+    static normalizePath(path) {
+        return /\/|\\$/gi.test(path) ? path : `${path}\\`;
+    }
 
 
 
+
+}
+
+
+module.exports.extractTestSuiteFileNameFromString = (str) => {
+    /**
+     * extract file path starting from Zulu
+     */
+    const regExp = /(?<=(Z  ))([A-Za-z0-9_\\]+)\.js/gi;
+    const match = regExp.exec(str);
+
+    return match != null ? match[0] : null;
 }
