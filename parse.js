@@ -42,7 +42,7 @@ function filter(lineList, fileList) {
 
     });
 
-    console.log("\nPlease wait as we extract the logs...");
+    console.log(`\n${lineList.length} lines will be processed. Please wait as we extract the logs. This may take a while....\n`);
 
     lineList.forEach(line => {
         for (var x = 0; x < testSuitesList.length; x++) {
