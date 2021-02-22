@@ -12,6 +12,8 @@ module.exports.MakeFile = class MakeFile {
 
         this.createOutputFolder(outputFolderPath);
 
+        outputFolderPath = outputFolderPath.length ? outputFolderPath : this.outputFolder;
+
         testSuiteList.forEach(testSuite => {
             const fileName = `${testSuite.name}.txt`;
             var temp = "";
@@ -20,7 +22,7 @@ module.exports.MakeFile = class MakeFile {
                 temp += ln + "\n";
             })
             fs.writeFileSync(`${outputFolderPath}${fileName}`, temp);
-            console.log(`Log for ${testSuite.name} written.`);
+            console.log(`Log for ${testSuite.name} with ${testSuite.logOutputPerLine.length} line(s) is written.`);
         });
 
     }

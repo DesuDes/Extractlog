@@ -12,6 +12,10 @@ const { TestSuite } = require("./core/interface/testSuite");
 //HP
 //node parse input\Sample_HP.txt -f tests\happy\billing\interactiveBilling\HP_BL_InteractiveBilling_VerifyInvoiceAmount.js tests\happy\hubs\projects\revenueForecast\HP_HB_PR_RF_ChangesToProjectsWithRFPlan.js tests\happy\hubs\projects\project\HP_MS_RPT_PRJ_PrintReports.js tests\happy\hubs\projects\project\HP_HB_PR_PRJ_SavedSearches_Suite.jstests\happy\hubs\projects\revenueForecast\HP_HB_PR_RF_ChangesToProjectsWithRFPlan.js tests\happy\hubs\projects\project\HP_MS_RPT_PRJ_PrintReports.js tests\happy\hubs\projects\project\HP_HB_PR_PRJ_SavedSearches_Suite.js
 
+//hp test
+//node parse input\135.txt -f tests\happy\hubs\projects\plan\HP_HB_PLN_VerifyProjectPlanReports(WBS1).js
+//node parse input\Sample_HP.txt -b output\input-Sample_HP-txt.map.json -o Sample_HP
+
 function filter(lineList, fileList) {
 
 
@@ -22,13 +26,13 @@ function filter(lineList, fileList) {
         console.log(`Creating instance for ${filePath}.`);
         var fileName = filePath.replace(/\\/gi, "-");
 
-        var reg = /([A-Za-z0-9_\\]+)\.js$/gi;
+        var reg = /([A-Za-z0-9_\\()]+)\.js$/gi;
         var match = reg.exec(fileName);
-        if(match != null){
-            fileName  = match[0];
+        if (match != null) {
+            fileName = match[0];
         }
 
-        filePath = filePath.replace(/\\/g, "\\\\");
+        filePath = filePath.replace(/\\/g, "\\\\").replace(/\(/gi, "\\(").replace(/\)/gi, "\\)");
 
         var exp = new RegExp(`${filePath}`, "gi");
 
@@ -38,19 +42,19 @@ function filter(lineList, fileList) {
 
     });
 
+    console.log("\nPlease wait as we extract the logs...");
+
     lineList.forEach(line => {
-
-        testSuitesList.forEach(suite => {
-
+        for (var x = 0; x < testSuitesList.length; x++) {
+            const suite = testSuitesList[x];
             if (suite.regExp.test(line)) {
                 /**
                  * Clean up leading date.
                  */
                 suite.logOutputPerLine.push(line.replace(/(.*).js  /gi, ""));
+                break;
             }
-        });
-
-
+        }
     });
 
     return testSuitesList;
@@ -74,7 +78,14 @@ function main() {
     }
 
     var outputFolder = getOutputFolder();
-    outputFolder = FileReader.normalizePath(outputFolder.length > 0 ? outputFolder[0] : "");
+
+    if (outputFolder.length > 0) {
+        outputFolder = FileReader.normalizePath(outputFolder[0]);
+    } else {
+        outputFolder = "";
+    }
+
+    console.log("target output folder", outputFolder);
 
     var testSuiteList = filter(lines, fileList);
     MakeFile.createLog(testSuiteList, outputFolder);
