@@ -1,4 +1,5 @@
 const fs = require('path');
+const { spawn } = require('child_process');
 
 /**
  * 
@@ -13,7 +14,7 @@ module.exports.getArgumentValues = (flag) => {
     const fileIndex = process.argv.indexOf(flag);
     const argValues = [];
 
-    if(fileIndex == -1){
+    if (fileIndex == -1) {
         return [];
     }
 
@@ -30,14 +31,45 @@ module.exports.getArgumentValues = (flag) => {
     return argValues;
 
 }
+module.exports.extractFile = () => {
+    const filter = [];
+    const xtag = this.getx();
+    const ytag = this.gety();
+    filter.push(xtag, ytag, process.argv[2]);
+
+    const childPython = spawn('python', [__dirname + './py/extract.py', JSON.stringify(filter)]);
+
+    return new Promise(function(resolve) {
+
+        childPython.stdout.on('data', (data) => {
+
+            let myjson = JSON.parse(data);
+
+            resolve(myjson);
+        });
+    });
+}
+
 
 /**
  * Get files included in the argument
  */
-module.exports.getFiles = () => {
+module.exports.getFiles = async () => {
+    const flag = "-f"
+    if (process.argv.indexOf(flag) !== -1) {
+        const filesList = this.getArgumentValues(flag)
 
-    return this.getArgumentValues("-f");
+        return new Promise((resolve) => {
+            resolve(filesList);
 
+        });
+    }
+
+    const filesList = await this.extractFile()
+
+    return new Promise((resolve) => {
+        resolve(filesList);
+    });
 }
 
 
@@ -47,7 +79,7 @@ module.exports.getBatchReferenceFile = () => {
     if (targetFile.length == 0)
         return null;
 
-    
+
     return targetFile[0];
 
 }
@@ -60,4 +92,14 @@ module.exports.getOutputFolder = () => {
 
 module.exports.getSourceFile = () => {
     return process.argv[2];
+}
+
+module.exports.getx = function() {
+
+    return this.getArgumentValues("-x");
+}
+
+module.exports.gety = function() {
+
+    return this.getArgumentValues("-y");
 }
