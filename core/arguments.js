@@ -43,9 +43,7 @@ module.exports.extractFile = () => {
 
         childPython.stdout.on('data', (data) => {
 
-            let myjson = JSON.parse(data);
-
-            resolve(myjson);
+            resolve(JSON.parse(data));
         });
     });
 }
