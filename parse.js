@@ -61,36 +61,37 @@ function filter(lineList, fileList) {
 }
 
 
-function main() {
+async function main() {
+    try {
 
-    console.time("Extract time");
+        const fileList = await getFiles();
+        const sourceFile = getSourceFile();
+        const lines = FileReader.readFile(sourceFile);
+        const batchReferenceFilePath = getBatchReferenceFile();
 
-    var fileList = getFiles();
-    const sourceFile = getSourceFile();
-    const lines = FileReader.readFile(sourceFile);
-    const batchReferenceFilePath = getBatchReferenceFile();
+        if (batchReferenceFilePath != null) {
+            console.log("Using batch for file reference.");
+            //read json
+            var file = FileReader.readFileNative(batchReferenceFilePath);
+            fileList = JSON.parse(file);
+        }
 
-    if (batchReferenceFilePath != null) {
-        console.log("Using batch for file reference.");
-        //read json
-        var file = FileReader.readFileNative(batchReferenceFilePath);
-        fileList = JSON.parse(file);
+        var outputFolder = getOutputFolder();
+
+        if (outputFolder.length > 0) {
+            outputFolder = FileReader.normalizePath(outputFolder[0]);
+        } else {
+            outputFolder = "";
+        }
+
+        console.log("target output folder", outputFolder);
+
+        var testSuiteList = filter(lines, fileList);
+        MakeFile.createLog(testSuiteList, outputFolder);
+        console.timeEnd("Extract time");
+    } catch (error) {
+        console.log(error);
     }
-
-    var outputFolder = getOutputFolder();
-
-    if (outputFolder.length > 0) {
-        outputFolder = FileReader.normalizePath(outputFolder[0]);
-    } else {
-        outputFolder = "";
-    }
-
-    console.log("target output folder", outputFolder);
-
-    var testSuiteList = filter(lines, fileList);
-    MakeFile.createLog(testSuiteList, outputFolder);
-    console.timeEnd("Extract time");
-
 }
 
 main();
